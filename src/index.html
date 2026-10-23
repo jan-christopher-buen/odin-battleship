@@ -7,13 +7,15 @@
     <title>Battleship · Fleet Command</title>
   </head>
   <body>
+    <a class="skip-link" href="#controls">Skip to game controls</a>
     <main id="app">
       <header class="masthead">
         <p class="eyebrow">Fleet command / single player</p>
         <h1>Battle<span>ship</span></h1>
         <p class="intro">Read the waters. Find the fleet. Make every shot count.</p>
+        <p class="fleet-spec">10 × 10 waters <span aria-hidden="true">/</span> 5 ships <span aria-hidden="true">/</span> One commander</p>
       </header>
-      <section class="command" aria-label="Game controls">
+      <section id="controls" class="command" aria-label="Game controls" tabindex="-1">
         <div class="status-copy">
           <p class="eyebrow" id="phase">Setup</p>
           <p id="status" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -33,12 +35,13 @@
         <section class="board-panel" aria-labelledby="enemy-title">
           <div class="board-heading"><h2 id="enemy-title">Enemy waters</h2><span id="enemy-fleet"></span></div>
           <p class="board-note" id="enemy-note">Enemy fleet concealed</p>
-          <div id="enemy-board" class="board" role="group" aria-label="Enemy waters: choose a coordinate to attack"></div>
+          <div id="enemy-board" class="board" role="group" aria-label="Enemy waters: choose a coordinate to attack" aria-describedby="keyboard-help"></div>
         </section>
       </div>
       <section class="intel" aria-label="Game information">
         <div><h2>Field guide</h2><p>Sink all five enemy ships before the computer sinks yours. One shot per turn, even after a hit.</p>
-          <ul class="legend"><li>■ Ship</li><li>× Hit</li><li>· Miss</li><li><span class="sunk-key">×</span> Sunk</li></ul>
+          <p id="keyboard-help">Keyboard: Tab to enemy waters, use arrow keys to navigate, then Enter or Space to fire. Home / End moves to the row edges. Fired squares remain available for inspection.</p>
+          <ul class="legend"><li><span class="ship-key">■</span> Ship</li><li><span class="hit-key">×</span> Hit</li><li><span class="miss-key">•</span> Miss</li><li><span class="sunk-key">⊗</span> Sunk</li></ul>
         </div>
         <div><h2>Recent signals</h2><ol id="reports" aria-label="Most recent shots, newest first"></ol></div>
       </section>
