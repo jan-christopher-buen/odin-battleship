@@ -101,3 +101,14 @@ test('rejects sparse coordinate arrays with a clear error before any mutation', 
   expect(() => board.placeShip(2, position, 'horizontal')).toThrow(/coordinate/i);
   expect(board.getSnapshot()).toEqual(before);
 });
+
+test('repeating a hit on a surviving ship never adds damage', () => {
+  const board = new Gameboard();
+  board.placeShip(2, [0, 0], 'horizontal');
+  expect(board.receiveAttack([0, 0])).toEqual({ outcome: 'hit' });
+  expect(board.receiveAttack([0, 0])).toEqual({ outcome: 'already-attacked' });
+  expect(board.getSnapshot().ships[0].hits).toBe(1);
+  expect(board.allShipsSunk()).toBe(false);
+  expect(board.receiveAttack([1, 0])).toEqual({ outcome: 'sunk' });
+  expect(board.allShipsSunk()).toBe(true);
+});
