@@ -1,16 +1,18 @@
 # Battleship
 
-A single-player naval strategy game built with vanilla JavaScript, ES modules, and test-driven development for [The Odin Project's Battleship assignment](https://www.theodinproject.com/lessons/node-path-javascript-battleship). Arrange your fleet, search enemy waters, and sink all five opposing ships before the computer sinks yours.
+A naval strategy game for one or two players, built with vanilla JavaScript, ES modules, and test-driven development for [The Odin Project's Battleship assignment](https://www.theodinproject.com/lessons/node-path-javascript-battleship). Arrange your fleet, search opposing waters, and sink all five ships before your own fleet is lost.
 
 ## Features
 
-- Complete games against a computer that selects random, untried coordinates.
+- Single-player games against a computer that hunts randomly, then targets untried adjacent squares after a hit.
+- Two-player games on one device, with private fleet setup and a pass-device screen between turns.
+- Drag-and-drop ship repositioning and rotation, with click/tap and keyboard alternatives.
 - Randomized legal fleets with a visible human setup and repeatable “Randomize fleet” control.
 - Two boards with coordinate labels, ship counters, recent shots, and distinct ship, hit, miss, and sunk markers.
 - Turn and victory announcements through a polite live region.
 - Keyboard attacks with one board tab stop, arrow navigation, and visible focus.
 - Responsive navy-and-teal interface with stacked boards on narrow screens.
-- New-game control that clears shots and cancels pending computer responses.
+- New-game control that resets either mode and cancels pending computer responses.
 
 ## Run locally
 
@@ -33,13 +35,22 @@ Webpack handles HTML, JavaScript, and CSS. Jest uses `babel-jest` and Babel's en
 
 ## How to play
 
-1. Review your five ships in **Your fleet**. Select **Randomize fleet** until you like the arrangement.
-2. Select **Start game** to confirm it. You fire first.
-3. Select a square in **Enemy waters**. The computer responds after a short delay; then you can fire again.
-4. Sink the enemy fleet to win. After either player wins, the remaining enemy ships are revealed and labeled.
-5. Select **New game** at any time to return to a fresh setup.
+1. Choose **Vs computer** or **Two players · pass device**. Changing modes starts a fresh setup.
+2. Review your five ships. Select **Randomize fleet** for a new layout, or rearrange individual ships.
+3. Against the computer, select **Start game**. You fire first; the computer responds after a short delay.
+4. In two-player mode, Player 1 selects **Ready**, arranges a fleet, and selects **Confirm fleet**. Pass the device to Player 2 to do the same. Pass it back to Player 1 to begin.
+5. Choose a square in opposing waters. In local mode, a valid shot immediately conceals both boards and shows the public shot result. Pass the device before the next player selects **Ready**. The other player should look away during private setup and turns.
+6. Sink the opposing fleet to win. The game immediately ends and reveals the remaining opposing ships. Select **New game** at any time to restart the selected mode.
 
-For keyboard play, starting the game focuses enemy square A1. Use the arrow keys to move, Home/End to reach the current row's edges, and Enter/Space to fire. The attack board has one tab stop. Fired squares remain navigable for inspection but cannot fire again. Focus stays on the same cell during the computer response. Tab or Shift+Tab leaves the board normally.
+### Arrange ships
+
+Every setup begins with a complete legal fleet. Drag a ship from the dock to its starting square, or drag an existing ship on your board. Grabbing an interior ship square preserves that segment's offset when dropping. **Rotate** changes the selected ship's next placement direction; apply it by placing or dropping that ship. Moving a ship may reuse its current squares, but cannot overlap another ship or cross a board edge. Rejected moves leave the fleet unchanged and announce an error.
+
+For click/tap placement, select a ship in the dock, choose its direction, and select its starting square on your board. For keyboard placement, select a ship, Tab to your board, move with arrow keys, and press Enter/Space to place it. Press **R** on your board to change direction. Native dragging is intended for desktop browsers; click/tap placement is available on touch devices.
+
+### Keyboard attacks
+
+Starting a single-player game or accepting a local turn focuses opposing square A1. Use arrow keys to move, Home/End to reach row edges, and Enter/Space to fire. The attack board has one tab stop. Fired squares remain navigable for inspection but cannot fire again. Focus stays on the same cell during a computer response. Local handoffs focus **Ready**, and restart focuses the appropriate setup control. Tab or Shift+Tab leaves a board normally.
 
 The legend uses shapes as well as color: **■** ship, **×** hit, **•** miss, and **⊗** sunk ship with a dashed border.
 
@@ -50,8 +61,10 @@ The legend uses shapes as well as color: **■** ship, **×** hit, **•** miss,
 - Every valid shot consumes a turn, including a hit. Invalid or duplicate shots preserve state and turn.
 - Sinking the final ship immediately ends the game. No further attacks or computer response are accepted.
 - Enemy ships remain concealed until hit/sunk or the game ends. Unrevealed locations never enter DOM classes, data attributes, labels, or hidden markup. This is a local game, so JavaScript memory is inspectable; concealment is a rendering rule.
-- The computer samples uniformly from remaining legal squares. It has no targeting strategy or knowledge-based advantage.
-- Setup cycles complete random layouts rather than supporting manual placement.
+- The computer targets orthogonal neighbors of recent hits, skips tried squares, and continues exploring those neighbors after misses. Sinking a ship clears the target queue; otherwise it samples remaining squares uniformly. It receives shot results only and never reads hidden ship locations. This is a simple pursuit strategy, not an optimal fleet-solving algorithm.
+- Both setup methods preserve complete fleets: randomization replaces the current player's layout, and manual placement repositions existing ships atomically.
+- Player 1 always fires first in local mode. Both players receive private setup screens; every valid nonwinning shot requires an explicit pass-device handoff. No automatic computer action runs in this mode.
+- Handoff screens have no board data in the rendering view. The DOM clears board markers and labels, hides the board area, and makes it inert. The latest shot outcome remains public. This supports cooperative pass-device play, not protection against someone inspecting application memory or revealing a turn without passing the device.
 
 ## Architecture and public interfaces
 
@@ -60,30 +73,33 @@ Domain modules have no DOM, event, or timer dependencies. Private fields hold mu
 | Module | Responsibility and interface |
 | --- | --- |
 | `src/ship.js` | `Ship(length)` exposes read-only `length` and `hits`, plus `hit()` and `isSunk()`. Length must be an integer from 1 to 10; damage is capped at length. |
-| `src/gameboard.js` | `Gameboard` owns ship locations and shot records. `placeShip(length, start, orientation)`, `receiveAttack(position)`, `hasReceivedAttack(position)`, `allShipsSunk()`, and `getSnapshot()` form its public API. |
-| `src/player.js` | `Player(type, random?, board?)` owns an independent board by default. Types are `human` and `computer`; `chooseAttack(targetBoard)` is computer-only and returns an untried coordinate or `null` if exhausted. |
+| `src/gameboard.js` | `Gameboard` owns ship locations and shot records. `placeShip(length, start, orientation)`, `moveShip(id, start, orientation)`, `receiveAttack(position)`, `hasReceivedAttack(position)`, `allShipsSunk()`, and `getSnapshot()` form its public API. |
+| `src/player.js` | `Player(type, random?, board?)` owns an independent board by default. Types are `human` and `computer`; `chooseAttack(targetBoard)` is computer-only and returns an untried coordinate or `null` if exhausted. `recordAttack(position, outcome)` receives completed shot results to maintain a private target queue. |
 | `src/fleet-placement.js` | `createRandomBoard(random?)` shuffles bounded horizontal/vertical candidates and searches with backtracking. It returns a fresh complete board, never a partially placed fleet. `FLEET_LENGTHS` is frozen. |
-| `src/game.js` | `Game({ random?, createBoard? })` owns both players and the `setup`, `human-turn`, `computer-turn`, and `game-over` phases. `prepare()` resets both players; `start()`, `humanAttack(position)`, `computerTurn()`, and `getSnapshot()` drive play. |
-| `src/dom.js` | Creates stable board elements, delegates events, renders snapshots, manages keyboard focus, and schedules computer responses. |
+| `src/game.js` | `Game({ random?, createBoard?, mode? })` supports `computer` and `local` modes. `prepare({ mode? })` resets the session; `randomizeFleet()` and `moveShip()` edit the current setup. `start()`, `ready()`, `humanAttack()`, `secondPlayerAttack()`, and `computerTurn()` drive phase transitions. `getSnapshot()` exposes detached model state; `getView()` provides the current rendering view. |
+| `src/dom.js` | Creates stable board elements, renders filtered views and handoffs, manages keyboard focus, and schedules computer responses. |
+| `src/placement-dom.js` | Handles ship selection, rotation controls, native drag/drop, and click/tap/keyboard placement. Validation stays in the domain modules. |
 | `src/index.js` | Connects a new game to the DOM and imports styles. |
 
 ### Results, validation, and snapshots
 
-`placeShip` accepts only `horizontal` or `vertical`. Invalid lengths, malformed/out-of-range coordinates, invalid orientations, overlaps, placement after attacks, and wrong-phase controller actions throw descriptive errors. Placements are fully validated before mutation. Starting requires both complete fleets with no prior attacks. `allShipsSunk()` is false on an empty board.
+`placeShip` accepts only `horizontal` or `vertical`. Invalid lengths, malformed/out-of-range coordinates, invalid orientations, overlaps, placement after attacks, and wrong-phase controller actions throw descriptive errors. Placements and moves are fully validated before mutation; editing is allowed only during setup. Starting requires both complete fleets with no prior attacks. `allShipsSunk()` is false on an empty board.
 
-`receiveAttack` and `humanAttack` return `{ outcome }`, where outcome is `miss`, `hit`, `sunk`, or `already-attacked`. A duplicate does not damage a ship or change any state. `computerTurn` returns `{ outcome, position }`. Random functions must return a finite number in `[0, 1)`.
+`receiveAttack`, `humanAttack`, and `secondPlayerAttack` return `{ outcome }`, where outcome is `miss`, `hit`, `sunk`, or `already-attacked`. A duplicate does not damage a ship or change any state. `computerTurn` returns `{ outcome, position }`. Random functions must return a finite number in `[0, 1)`.
 
-A board snapshot contains `cells[y][x]` with `{ ship, shot }`: ship is a numeric ship index or `null`, and shot is `null`, `hit`, or `miss`. Its `ships` entries contain `{ length, hits, sunk, cells }`. A controller snapshot adds `phase`, `winner`, `latest` (`{ actor, position, outcome }` or `null`), and the `human`/`computer` board snapshots. Returned arrays and objects do not expose internal ships or mutable model storage. The renderer filters enemy data before updating markup.
+A board snapshot contains `cells[y][x]` with `{ ship, shot }`: ship is a numeric ship index or `null`, and shot is `null`, `hit`, or `miss`. Its `ships` entries contain `{ length, hits, sunk, cells }`. A controller snapshot adds `mode`, `phase`, `viewer`, `pendingPlayer`, `winner`, `latest` (`{ actor, position, outcome }` or `null`), and the `human`/`computer` board snapshots. The seat IDs remain `human` and `computer`; in local mode they correspond to Player 1 and Player 2, and both `Player` instances have type `human`. Returned arrays and objects do not expose internal ships or mutable model storage.
+
+The DOM uses `getView()`, which replaces raw seat boards with `own` and `enemy`. Before game over, enemy cells contain no ship IDs, only observed shot markers (`null`, `hit`, `miss`, or `sunk`), and enemy ship summaries contain only `{ sunk }`. During `handoff`, both boards and `viewer` are `null`. Other phases are `setup`, `human-turn`, `second-player-turn`, `computer-turn`, and `game-over`. `ready()` is accepted only during handoff, and exposes the intended player's view before continuing setup or play.
 
 ### One shot through the application
 
-An enemy-cell click calls `Game.humanAttack`, which validates the phase and delegates to the computer's `Gameboard.receiveAttack`. The board records the shot and damages the appropriate ship. The controller checks victory and advances the phase. The DOM reads a new snapshot, updates feedback, and immediately locks attacks. If a computer turn remains, it schedules one response and renders again afterward.
+An enemy-cell click calls `Game.humanAttack`, which validates the phase and delegates to the computer's `Gameboard.receiveAttack`. The board records the shot and damages the appropriate ship. The controller checks victory and advances the phase. The DOM reads a filtered view, updates feedback, and immediately locks attacks. If a computer turn remains, it schedules one response, records its outcome for AI targeting, and renders again afterward. In local mode, a shot instead enters handoff; accepting the next turn exposes that player's own board and the concealed opponent board.
 
 The DOM keeps at most one timer. Reset clears it and increments a session token; callbacks verify both the token and current phase. Cell elements and listeners are created once, so rerenders and restarts preserve focus and avoid accumulating event handlers. Board buttons use `aria-disabled` plus event/controller guards to preserve inspection focus while preventing attacks.
 
 ## Testing
 
-Tests exercise public domain interfaces in Jest's Node environment. Coverage includes ship validation and capped hits; placement boundaries, overlap, adjacency, and atomic failures; duplicate attacks, misses, correct ship damage, and detached snapshots; computer move exhaustion; legal randomized fleets and constant randomness; alternating turns, both victory paths, and fresh restart state. Injected randomness and predetermined board factories make scenarios reproducible.
+Tests exercise public domain interfaces in Jest's Node environment. Coverage includes ship validation and capped hits; placement boundaries, overlap, adjacency, and atomic failures; duplicate attacks, misses, correct ship damage, and detached snapshots; computer move exhaustion and adjacent targeting without hidden knowledge; legal randomized fleets and constant randomness; atomic ship movement and rotation; alternating turns, private two-player setup and handoffs, filtered views, both players' victory paths, and fresh restart/mode state. Injected randomness and predetermined board factories make scenarios reproducible.
 
 Tests are written before their corresponding implementation and run through failing/passing cycles. No DOM tests, jsdom, snapshots, or automated browser tests are included, following the assignment. See the [manual browser review checklist](docs/manual-qa.md) for interaction, accessibility, mobile layout, and production-path checks.
 
@@ -105,6 +121,6 @@ The workflow follows [GitHub's custom Pages workflow documentation](https://docs
 
 ## Limitations and learning outcomes
 
-This version has random fleet setup, a random computer opponent, and in-memory game state. Reloading starts a new session. Drag-and-drop placement, pass-device multiplayer, and smarter targeting are possible future improvements.
+Games remain in memory, so reloading starts a new session. Multiplayer is local pass-device play; there is no online play or saved progress. Native drag-and-drop behavior varies by browser, with click/tap and keyboard alternatives provided. The computer uses basic adjacent pursuit and can abandon unresolved neighboring targets when a ship sinks. More advanced targeting, saved games, and online multiplayer are possible future improvements.
 
-The project practices TDD, class/module boundaries, validation before mutation, deterministic randomness, state-driven rendering, and timer lifecycle management. It also explores accessible keyboard interaction without coupling game rules to the interface.
+The project practices TDD, class/module boundaries, validation before mutation, deterministic randomness, state-driven rendering, private player views, and timer lifecycle management. It also explores accessible keyboard interaction without coupling game rules to the interface.
