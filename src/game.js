@@ -27,6 +27,16 @@ export default class Game {
     this.#latest = null;
   }
 
+  moveShip(id, start, orientation) {
+    this.#requirePhase('setup');
+    this.#human.board.moveShip(id, start, orientation);
+  }
+
+  randomizeFleet() {
+    this.#requirePhase('setup');
+    this.#human = new Player('human', this.#random, this.#createBoard(this.#random));
+  }
+
   start() {
     this.#requirePhase('setup');
     for (const player of [this.#human, this.#computer]) {

@@ -1,4 +1,5 @@
 import { BOARD_SIZE } from './gameboard.js';
+import mountPlacement from './placement-dom.js';
 
 const coordinate = (x, y) => `${String.fromCharCode(65 + x)}${y + 1}`;
 const phaseLabels = {
@@ -58,7 +59,7 @@ function renderBoard(elements, board, reveal, active) {
 
 export default function mountGame(game) {
   const enemyBoard = document.querySelector('#enemy-board');
-  const humanCells = createBoard(document.querySelector('#human-board'), false);
+  const humanCells = createBoard(document.querySelector('#human-board'), true);
   const enemyCells = createBoard(enemyBoard, true);
   const status = document.querySelector('#status');
   const start = document.querySelector('#start');
@@ -78,7 +79,7 @@ export default function mountGame(game) {
 
   function render() {
     const state = game.getSnapshot();
-    renderBoard(humanCells, state.human, true, false);
+    renderBoard(humanCells, state.human, true, state.phase === 'setup');
     renderBoard(enemyCells, state.computer, state.phase === 'game-over', state.phase === 'human-turn');
     start.disabled = state.phase !== 'setup';
     randomize.disabled = state.phase !== 'setup';
@@ -101,6 +102,7 @@ export default function mountGame(game) {
     document.querySelector('#human-fleet').textContent = `${state.human.ships.filter((ship) => !ship.sunk).length} / 5 ships afloat`;
     document.querySelector('#enemy-fleet').textContent = `${state.computer.ships.filter((ship) => !ship.sunk).length} / 5 ships afloat`;
     updateTabStop();
+    placement.render({ phase: state.phase, own: state.human });
   }
 
   function recordShot() {
@@ -116,6 +118,7 @@ export default function mountGame(game) {
     pendingTurn = null;
     session += 1;
     game.prepare();
+    placement.reset();
     focusIndex = 0;
     reports.replaceChildren();
     render();
@@ -134,9 +137,13 @@ export default function mountGame(game) {
     }, 550);
   }
 
+  const placement = mountPlacement({ game, cells: humanCells, onChange: render, announce: (message) => { status.textContent = message; } });
+
   randomize.addEventListener('click', () => {
     if (game.getSnapshot().phase !== 'setup') return;
-    reset();
+    game.randomizeFleet();
+    placement.reset();
+    render();
     status.textContent = 'Fleet randomized. Review your ships, then start the game.';
   });
   start.addEventListener('click', () => {

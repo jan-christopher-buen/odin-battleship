@@ -84,3 +84,13 @@ footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #294253; fon
   .cell { border: 1px solid CanvasText; }
   .cell.sunk { border: 2px dashed CanvasText; }
 }
+
+[hidden] { display: none !important; }
+.placement { margin-bottom: 24px; padding: 20px; border: 1px solid #345064; border-radius: 12px; background: #102334; }
+.placement p { font-size: .83rem; color: #b7cbd8; }
+.ship-dock, .placement-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ship-dock button[aria-pressed="true"] { background: #22565c; border-color: #57ddca; }
+.ship-dock button[draggable="true"], .cell[draggable="true"] { cursor: grab; }
+.placement-tools { margin-top: 14px; }
+.cell.drop-target { outline: 3px solid #f5cf70; outline-offset: -2px; }
+@media (max-width: 420px) { .placement { padding: 14px 10px; } }

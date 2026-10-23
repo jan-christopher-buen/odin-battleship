@@ -26,11 +26,17 @@
           <button id="restart" type="button">New game</button>
         </div>
       </section>
+      <section id="placement" class="placement" aria-labelledby="placement-title">
+        <h2 id="placement-title">Arrange your fleet</h2>
+        <p id="placement-help">Drag a ship from the dock or your board. You can also select a ship below, then click or tap its starting square. Use Rotate to change direction. Keyboard: arrow keys on your board, Enter/Space to place, R to rotate.</p>
+        <div id="ship-dock" class="ship-dock" role="group" aria-label="Select a ship to reposition"></div>
+        <div class="placement-tools"><button id="rotate" type="button">Rotate: horizontal</button><p id="placement-selection"></p></div>
+      </section>
       <div class="boards">
         <section class="board-panel" aria-labelledby="human-title">
           <div class="board-heading"><h2 id="human-title">Your fleet</h2><span id="human-fleet"></span></div>
           <p class="board-note">Home waters · your ships are visible</p>
-          <div id="human-board" class="board" role="group" aria-label="Your fleet and incoming shots"></div>
+          <div id="human-board" class="board" role="group" aria-label="Your fleet and incoming shots" aria-describedby="placement-help"></div>
         </section>
         <section class="board-panel" aria-labelledby="enemy-title">
           <div class="board-heading"><h2 id="enemy-title">Enemy waters</h2><span id="enemy-fleet"></span></div>

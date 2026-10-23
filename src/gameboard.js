@@ -16,25 +16,46 @@ export default class Gameboard {
   #attackCount = 0;
 
   placeShip(length, start, orientation) {
-    if (this.#attackCount > 0) throw new Error('Cannot place ships after attacks begin.');
+    this.#requireSetup();
+    const ship = new Ship(length);
+    const cells = this.#placementCells(length, start, orientation);
+    const id = this.#ships.length;
+    this.#ships.push({ ship, cells });
+    cells.forEach(([x, y]) => { this.#cells[y][x].ship = id; });
+  }
+
+  moveShip(id, start, orientation) {
+    this.#requireSetup();
+    if (!Number.isInteger(id) || id < 0 || id >= this.#ships.length) {
+      throw new RangeError('Ship index must identify a placed ship.');
+    }
+    const entry = this.#ships[id];
+    const cells = this.#placementCells(entry.ship.length, start, orientation, id);
+    // Validate the complete move first, including overlap with other ships.
+    entry.cells.forEach(([x, y]) => { this.#cells[y][x].ship = null; });
+    entry.cells = cells;
+    cells.forEach(([x, y]) => { this.#cells[y][x].ship = id; });
+  }
+
+  #requireSetup() {
+    if (this.#attackCount > 0) throw new Error('Cannot place or move ships after attacks begin.');
+  }
+
+  #placementCells(length, start, orientation, ignoredShip = null) {
     validatePosition(start);
     if (!['horizontal', 'vertical'].includes(orientation)) {
       throw new TypeError('Orientation must be horizontal or vertical.');
     }
-    const ship = new Ship(length);
     const cells = Array.from({ length }, (_, offset) => [
       start[0] + (orientation === 'horizontal' ? offset : 0),
       start[1] + (orientation === 'vertical' ? offset : 0),
     ]);
     cells.forEach((position) => {
       validatePosition(position);
-      if (this.#cells[position[1]][position[0]].ship !== null) {
-        throw new Error('Ships cannot overlap.');
-      }
+      const occupant = this.#cells[position[1]][position[0]].ship;
+      if (occupant !== null && occupant !== ignoredShip) throw new Error('Ships cannot overlap.');
     });
-    const id = this.#ships.length;
-    this.#ships.push({ ship, cells });
-    cells.forEach(([x, y]) => { this.#cells[y][x].ship = id; });
+    return cells;
   }
 
   receiveAttack(position) {

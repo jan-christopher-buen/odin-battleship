@@ -109,3 +109,16 @@ test('preparing during a turn resets both boards and returns independent snapsho
   expect(game.getSnapshot().computer.cells[0][0].shot).toBeNull();
   expect(game.getSnapshot().phase).toBe('setup');
 });
+
+test('controller permits ship repositioning and randomization only during setup', () => {
+  const game = makeGame();
+  game.moveShip(0, [5, 0], 'vertical');
+  expect(game.getSnapshot().human.ships[0].cells).toEqual([[5, 0], [5, 1], [5, 2], [5, 3], [5, 4]]);
+  game.randomizeFleet();
+  expect(game.getSnapshot().human).toEqual(fleet().getSnapshot());
+  game.start();
+  const before = game.getSnapshot();
+  expect(() => game.moveShip(0, [5, 0], 'vertical')).toThrow(/phase/i);
+  expect(() => game.randomizeFleet()).toThrow(/phase/i);
+  expect(game.getSnapshot()).toEqual(before);
+});

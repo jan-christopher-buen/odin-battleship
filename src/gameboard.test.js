@@ -112,3 +112,38 @@ test('repeating a hit on a surviving ship never adds damage', () => {
   expect(board.receiveAttack([1, 0])).toEqual({ outcome: 'sunk' });
   expect(board.allShipsSunk()).toBe(true);
 });
+
+describe('ship repositioning during setup', () => {
+  test('moves and rotates a ship while preserving identity and other ships', () => {
+    const board = new Gameboard();
+    board.placeShip(3, [0, 0], 'horizontal');
+    board.placeShip(2, [5, 5], 'vertical');
+    board.moveShip(0, [1, 0], 'horizontal');
+    expect(board.getSnapshot().ships[0].cells).toEqual([[1, 0], [2, 0], [3, 0]]);
+    expect(board.getSnapshot().cells[0][0].ship).toBeNull();
+    board.moveShip(0, [9, 7], 'vertical');
+    expect(board.getSnapshot().ships[0].cells).toEqual([[9, 7], [9, 8], [9, 9]]);
+    expect(board.getSnapshot().ships[1].cells).toEqual([[5, 5], [5, 6]]);
+    expect(board.getSnapshot().cells[9][9].ship).toBe(0);
+  });
+  test.each([
+    [0, [5, 4], 'vertical'], [0, [9, 9], 'horizontal'],
+    [0, [0, 0], 'diagonal'], [-1, [0, 0], 'horizontal'],
+    [2, [0, 0], 'horizontal'], [0.5, [0, 0], 'horizontal'],
+  ])('rejected move leaves the whole board untouched: %p %p %p', (id, start, orientation) => {
+    const board = new Gameboard();
+    board.placeShip(3, [0, 0], 'horizontal');
+    board.placeShip(2, [5, 5], 'vertical');
+    const before = board.getSnapshot();
+    expect(() => board.moveShip(id, start, orientation)).toThrow();
+    expect(board.getSnapshot()).toEqual(before);
+  });
+  test('moving is prohibited after a valid attack', () => {
+    const board = new Gameboard();
+    board.placeShip(2, [0, 0], 'horizontal');
+    board.receiveAttack([9, 9]);
+    const before = board.getSnapshot();
+    expect(() => board.moveShip(0, [3, 3], 'horizontal')).toThrow(/attack/i);
+    expect(board.getSnapshot()).toEqual(before);
+  });
+});
