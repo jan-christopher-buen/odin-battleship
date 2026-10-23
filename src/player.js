@@ -4,6 +4,7 @@ export default class Player {
   #type;
   #board;
   #random;
+  #targets = [];
 
   constructor(type, random = Math.random, board = new Gameboard()) {
     if (!['human', 'computer'].includes(type)) throw new TypeError('Unsupported player type.');
@@ -15,8 +16,18 @@ export default class Player {
   get type() { return this.#type; }
   get board() { return this.#board; }
 
+  recordAttack([x, y], outcome) {
+    if (outcome === 'sunk') this.#targets = [];
+    if (outcome !== 'hit') return;
+    const neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]
+      .filter(([cx, cy]) => cx >= 0 && cx < BOARD_SIZE && cy >= 0 && cy < BOARD_SIZE);
+    this.#targets = [...neighbors, ...this.#targets];
+  }
+
   chooseAttack(targetBoard) {
     if (this.#type !== 'computer') throw new Error('Only computer players select automatic attacks.');
+    this.#targets = this.#targets.filter((position) => !targetBoard.hasReceivedAttack(position));
+    if (this.#targets.length > 0) return [...this.#targets[0]];
     const remaining = [];
     for (let y = 0; y < BOARD_SIZE; y += 1) {
       for (let x = 0; x < BOARD_SIZE; x += 1) {

@@ -74,9 +74,11 @@ test('human victory ends immediately and prevents every further attack', () => {
 test('computer victory ends immediately, and restart creates fresh setup state', () => {
   const game = new Game({ createBoard: fleet, random: () => 0 });
   game.start();
-  // Row-major computer selection reaches the final human ship at B5.
-  for (let turn = 0; turn < 42; turn += 1) {
-    game.humanAttack([turn % 10, 5 + Math.floor(turn / 10)]);
+  const water = Array.from({ length: 100 }, (_, index) => [index % 10, Math.floor(index / 10)])
+    .filter(([x, y]) => y >= 5 || x >= [5, 4, 3, 3, 2][y]);
+  for (const position of water) {
+    if (game.getSnapshot().phase === 'game-over') break;
+    game.humanAttack(position);
     game.computerTurn();
   }
   expect(game.getSnapshot().winner).toBe('computer');

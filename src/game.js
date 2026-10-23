@@ -48,7 +48,9 @@ export default class Game {
     this.#requirePhase('computer-turn');
     const position = this.#computer.chooseAttack(this.#human.board);
     if (position === null) throw new Error('No legal computer move remains.');
-    return { ...this.#attack('computer', this.#human.board, position), position };
+    const result = this.#attack('computer', this.#human.board, position);
+    this.#computer.recordAttack(position, result.outcome);
+    return { ...result, position };
   }
 
   #attack(actor, target, position) {
