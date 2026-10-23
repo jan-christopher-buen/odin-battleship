@@ -1,13 +1,5 @@
-import Gameboard from './gameboard.js';
+import createRandomBoard, { FLEET_LENGTHS } from './fleet-placement.js';
 import Player from './player.js';
-
-export const FLEET_LENGTHS = Object.freeze([5, 4, 3, 3, 2]);
-
-function createPredeterminedBoard() {
-  const board = new Gameboard();
-  FLEET_LENGTHS.forEach((length, y) => board.placeShip(length, [0, y], 'horizontal'));
-  return board;
-}
 
 export default class Game {
   #human;
@@ -18,7 +10,7 @@ export default class Game {
   #random;
   #createBoard;
 
-  constructor({ random = Math.random, createBoard = createPredeterminedBoard } = {}) {
+  constructor({ random = Math.random, createBoard = createRandomBoard } = {}) {
     this.#random = random;
     this.#createBoard = createBoard;
     this.prepare();

@@ -51,6 +51,7 @@ export default function mountGame(game) {
   const status = document.querySelector('#status');
   const start = document.querySelector('#start');
   const restart = document.querySelector('#restart');
+  const randomize = document.querySelector('#randomize');
   const reports = document.querySelector('#reports');
 
   function render() {
@@ -58,9 +59,10 @@ export default function mountGame(game) {
     renderBoard(humanCells, state.human, true, false);
     renderBoard(enemyCells, state.computer, state.phase === 'game-over', state.phase === 'human-turn');
     start.disabled = state.phase !== 'setup';
+    randomize.disabled = state.phase !== 'setup';
     document.querySelector('#phase').textContent = state.phase.replaceAll('-', ' ');
     document.querySelector('#enemy-note').textContent = state.phase === 'game-over' ? 'Enemy fleet revealed' : 'Enemy fleet concealed';
-    status.textContent = state.phase === 'setup' ? 'Your fleet is ready. Start the game to fire first.'
+    status.textContent = state.phase === 'setup' ? 'Randomize your fleet, or start the game to fire first.'
       : state.phase === 'game-over' ? state.winner === 'human' ? 'Victory! You sank the enemy fleet.' : 'Defeat. The computer sank your fleet.'
         : state.phase === 'human-turn' ? 'Your turn. Choose a square in enemy waters.' : 'Computer turn.';
     document.querySelector('#human-fleet').textContent = `${state.human.ships.filter((ship) => !ship.sunk).length} / 5 ships afloat`;
@@ -75,6 +77,12 @@ export default function mountGame(game) {
     while (reports.children.length > 4) reports.lastElementChild.remove();
   }
 
+  randomize.addEventListener('click', () => {
+    if (game.getSnapshot().phase !== 'setup') return;
+    game.prepare();
+    render();
+    status.textContent = 'Fleet randomized. Review your ships, then start the game.';
+  });
   start.addEventListener('click', () => { game.start(); render(); });
   restart.addEventListener('click', () => {
     game.prepare();
