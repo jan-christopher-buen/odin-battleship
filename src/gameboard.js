@@ -4,7 +4,7 @@ export const BOARD_SIZE = 10;
 
 function validatePosition(position) {
   if (!Array.isArray(position) || position.length !== 2 ||
-      !position.every((value) => Number.isInteger(value) && value >= 0 && value < BOARD_SIZE)) {
+      ![position[0], position[1]].every((value) => Number.isInteger(value) && value >= 0 && value < BOARD_SIZE)) {
     throw new RangeError('Coordinates must be [x, y] integers from 0 through 9.');
   }
 }

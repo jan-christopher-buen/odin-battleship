@@ -91,3 +91,13 @@ describe('Gameboard attacks and snapshots', () => {
     expect(new Gameboard().getSnapshot().ships).toEqual([]);
   });
 });
+
+test('rejects sparse coordinate arrays with a clear error before any mutation', () => {
+  const board = new Gameboard();
+  const position = Array(2);
+  const before = board.getSnapshot();
+  expect(() => board.receiveAttack(position)).toThrow(/coordinate/i);
+  expect(() => board.hasReceivedAttack(position)).toThrow(/coordinate/i);
+  expect(() => board.placeShip(2, position, 'horizontal')).toThrow(/coordinate/i);
+  expect(board.getSnapshot()).toEqual(before);
+});
