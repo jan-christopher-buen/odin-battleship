@@ -122,3 +122,32 @@ test('controller permits ship repositioning and randomization only during setup'
   expect(() => game.randomizeFleet()).toThrow(/phase/i);
   expect(game.getSnapshot()).toEqual(before);
 });
+
+test('computer turn results feed adjacent targeting in the controller', () => {
+  const centeredFleet = () => {
+    const board = new Gameboard();
+    board.placeShip(5, [4, 4], 'horizontal');
+    [4, 3, 3, 2].forEach((length, y) => board.placeShip(length, [0, y], 'horizontal'));
+    return board;
+  };
+  const game = new Game({ createBoard: centeredFleet, random: () => 0.44 });
+  game.start();
+  game.humanAttack([9, 9]);
+  expect(game.computerTurn()).toEqual({ position: [4, 4], outcome: 'hit' });
+  game.humanAttack([9, 8]);
+  expect(game.computerTurn()).toEqual({ position: [5, 4], outcome: 'hit' });
+});
+
+test('the single-player view exposes hit and sunk markers without hidden enemy placement', () => {
+  const game = makeGame();
+  expect(game.getView().enemy.cells.flat().every((cell) => cell.ship === null)).toBe(true);
+  game.start();
+  game.humanAttack([0, 4]);
+  expect(game.getView().enemy.cells[4][0]).toEqual({ ship: null, shot: 'hit' });
+  game.computerTurn();
+  game.humanAttack([1, 4]);
+  expect(game.getView().enemy.cells[4][0]).toEqual({ ship: null, shot: 'sunk' });
+  expect(game.getView().enemy.cells[4][1]).toEqual({ ship: null, shot: 'sunk' });
+  expect(game.getView().enemy.ships[4]).toEqual({ sunk: true });
+  expect(game.getView().enemy.ships[0]).not.toHaveProperty('cells');
+});

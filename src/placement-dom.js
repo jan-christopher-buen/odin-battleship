@@ -9,7 +9,7 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
   const rotate = document.querySelector('#rotate');
   const selection = document.querySelector('#placement-selection');
   let selected = 0;
-  let orientation = 'horizontal';
+  let orientation = null;
   let focusIndex = 0;
   let dragging = null;
   let currentBoard;
@@ -23,6 +23,9 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
     return button;
   });
 
+  const shipOrientation = (ship) => ship.cells[0][1] === ship.cells[1][1] ? 'horizontal' : 'vertical';
+  const selectionText = () => `${names[selected]} (${FLEET_LENGTHS[selected]} squares) · next placement: ${orientation}`;
+
   function clearDropTarget() {
     cells.forEach((cell) => cell.classList.remove('drop-target'));
   }
@@ -30,6 +33,7 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
   function render({ phase, own }) {
     enabled = phase === 'setup';
     currentBoard = own;
+    if (enabled && orientation === null) orientation = shipOrientation(own.ships[selected]);
     document.querySelector('#placement').hidden = !enabled;
     buttons.forEach((button, id) => {
       button.disabled = !enabled;
@@ -38,7 +42,8 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
     });
     rotate.disabled = !enabled;
     rotate.textContent = `Rotate: ${orientation}`;
-    selection.textContent = `${names[selected]} (${FLEET_LENGTHS[selected]} squares) · next placement: ${orientation}`;
+    selection.textContent = enabled ? selectionText() : '';
+    if (!enabled) rotate.textContent = 'Rotate';
     cells.forEach((cell, index) => {
       cell.tabIndex = enabled && index === focusIndex ? 0 : -1;
       cell.draggable = enabled && own.cells[Math.floor(index / BOARD_SIZE)][index % BOARD_SIZE].ship !== null;
@@ -68,6 +73,7 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
     const button = event.target.closest('button');
     if (!button || !enabled) return;
     selected = Number(button.dataset.ship);
+    orientation = shipOrientation(currentBoard.ships[selected]);
     onChange();
     announce(`${names[selected]} selected. Drag it, or choose a starting square on your board.`);
   });
@@ -128,7 +134,7 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
     const id = currentBoard.cells[y][x].ship;
     if (id === null) { event.preventDefault(); return; }
     const ship = currentBoard.ships[id];
-    orientation = ship.cells[0][1] === ship.cells[1][1] ? 'horizontal' : 'vertical';
+    if (id !== selected) orientation = shipOrientation(ship);
     const offset = ship.cells.findIndex(([cx, cy]) => cx === x && cy === y);
     beginDrag(event, id, offset);
     rotate.textContent = `Rotate: ${orientation}`;
@@ -152,12 +158,16 @@ export default function mountPlacement({ game, cells, onChange, announce }) {
     dragging = null;
     clearDropTarget();
   });
-  function endDrag() { dragging = null; clearDropTarget(); }
+  function endDrag() {
+    dragging = null;
+    clearDropTarget();
+    selection.textContent = enabled ? selectionText() : '';
+  }
   board.addEventListener('dragend', endDrag);
   dock.addEventListener('dragend', endDrag);
 
   return {
     render,
-    reset() { selected = 0; orientation = 'horizontal'; focusIndex = 0; endDrag(); },
+    reset() { selected = 0; orientation = null; focusIndex = 0; endDrag(); },
   };
 }

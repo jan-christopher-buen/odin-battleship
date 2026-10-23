@@ -3,18 +3,26 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A tactical Battleship game. Arrange your fleet and challenge the computer.">
+    <meta name="description" content="A tactical Battleship game. Arrange your fleet and challenge the computer or a friend.">
     <title>Battleship · Fleet Command</title>
   </head>
   <body>
     <a class="skip-link" href="#controls">Skip to game controls</a>
     <main id="app">
       <header class="masthead">
-        <p class="eyebrow">Fleet command / single player</p>
+        <p class="eyebrow">Fleet command / Battleship</p>
         <h1>Battle<span>ship</span></h1>
         <p class="intro">Read the waters. Find the fleet. Make every shot count.</p>
-        <p class="fleet-spec">10 × 10 waters <span aria-hidden="true">/</span> 5 ships <span aria-hidden="true">/</span> One commander</p>
+        <p class="fleet-spec">10 × 10 waters <span aria-hidden="true">/</span> 5 ships <span aria-hidden="true">/</span> <span id="commander-count">One commander</span></p>
       </header>
+      <div class="mode-picker">
+        <label for="mode">Game mode</label>
+        <select id="mode" aria-describedby="mode-help">
+          <option value="computer">Vs computer</option>
+          <option value="local">Two players · pass device</option>
+        </select>
+        <span id="mode-help">Changing mode starts a fresh setup.</span>
+      </div>
       <section id="controls" class="command" aria-label="Game controls" tabindex="-1">
         <div class="status-copy">
           <p class="eyebrow" id="phase">Setup</p>
@@ -32,25 +40,33 @@
         <div id="ship-dock" class="ship-dock" role="group" aria-label="Select a ship to reposition"></div>
         <div class="placement-tools"><button id="rotate" type="button">Rotate: horizontal</button><p id="placement-selection"></p></div>
       </section>
-      <div class="boards">
-        <section class="board-panel" aria-labelledby="human-title">
-          <div class="board-heading"><h2 id="human-title">Your fleet</h2><span id="human-fleet"></span></div>
-          <p class="board-note">Home waters · your ships are visible</p>
-          <div id="human-board" class="board" role="group" aria-label="Your fleet and incoming shots" aria-describedby="placement-help"></div>
-        </section>
-        <section class="board-panel" aria-labelledby="enemy-title">
-          <div class="board-heading"><h2 id="enemy-title">Enemy waters</h2><span id="enemy-fleet"></span></div>
-          <p class="board-note" id="enemy-note">Enemy fleet concealed</p>
-          <div id="enemy-board" class="board" role="group" aria-label="Enemy waters: choose a coordinate to attack" aria-describedby="keyboard-help"></div>
+      <section id="handoff" class="handoff" aria-labelledby="handoff-title" hidden>
+        <p class="eyebrow">Private command station</p>
+        <h2 id="handoff-title">Pass the device</h2>
+        <p>Both boards are concealed. Pass the device before continuing. The other player should look away while you arrange your fleet or take your turn.</p>
+        <button id="ready" class="primary" type="button">Ready</button>
+      </section>
+      <div id="play-area">
+        <div class="boards">
+          <section class="board-panel" aria-labelledby="human-title">
+            <div class="board-heading"><h2 id="human-title">Your fleet</h2><span id="human-fleet"></span></div>
+            <p class="board-note">Home waters · your ships are visible</p>
+            <div id="human-board" class="board" role="group" aria-label="Your fleet and incoming shots" aria-describedby="placement-help"></div>
+          </section>
+          <section class="board-panel" aria-labelledby="enemy-title">
+            <div class="board-heading"><h2 id="enemy-title">Enemy waters</h2><span id="enemy-fleet"></span></div>
+            <p class="board-note" id="enemy-note">Enemy fleet concealed</p>
+            <div id="enemy-board" class="board" role="group" aria-label="Enemy waters: choose a coordinate to attack" aria-describedby="keyboard-help"></div>
+          </section>
+        </div>
+        <section class="intel" aria-label="Game information">
+          <div><h2>Field guide</h2><p>Sink all five opposing ships before your fleet is sunk. One shot per turn, even after a hit.</p>
+            <p id="keyboard-help">Keyboard: Tab to enemy waters, use arrow keys to navigate, then Enter or Space to fire. Home / End moves to the row edges. Fired squares remain available for inspection.</p>
+            <ul class="legend"><li><span class="ship-key">■</span> Ship</li><li><span class="hit-key">×</span> Hit</li><li><span class="miss-key">•</span> Miss</li><li><span class="sunk-key">⊗</span> Sunk</li></ul>
+          </div>
+          <div><h2>Recent signals</h2><ol id="reports" aria-label="Most recent shots, newest first"></ol></div>
         </section>
       </div>
-      <section class="intel" aria-label="Game information">
-        <div><h2>Field guide</h2><p>Sink all five enemy ships before the computer sinks yours. One shot per turn, even after a hit.</p>
-          <p id="keyboard-help">Keyboard: Tab to enemy waters, use arrow keys to navigate, then Enter or Space to fire. Home / End moves to the row edges. Fired squares remain available for inspection.</p>
-          <ul class="legend"><li><span class="ship-key">■</span> Ship</li><li><span class="hit-key">×</span> Hit</li><li><span class="miss-key">•</span> Miss</li><li><span class="sunk-key">⊗</span> Sunk</li></ul>
-        </div>
-        <div><h2>Recent signals</h2><ol id="reports" aria-label="Most recent shots, newest first"></ol></div>
-      </section>
       <footer>Built with JavaScript &amp; strategy · The Odin Project</footer>
     </main>
   </body>
